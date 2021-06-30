@@ -54,7 +54,7 @@ def augmentation(image_file, label):
     Generate tf.dataset based on images and labels. 
     Lists have to be formatted depending on multi label or single label classification.
     Encoding labels to integer values [0, ...., num_classes].
-    Does train, val splitting.
+    Does train, val splitting. Shuffling is important.
     Calls data augmentation and batching functions.
     Inputs
     ---------------
