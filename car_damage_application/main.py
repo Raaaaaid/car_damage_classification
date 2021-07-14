@@ -1,5 +1,6 @@
 import argparse
 import json
+import tensorflow as tf
 from tensorflow import keras
 from inference import single_inference, preprocess_image
 
@@ -18,6 +19,8 @@ type_thresh = None
 '''
 Initialization of models, label lists and threshold values.
 Parameters get read from a Json file (see application_config.json).
+Since TensorFlow allocates resources on the first run of the model, we do this in the initialization step.
+This nets a small time gain on the first detection of an actual image.
     ---------------
     Inputs
     ---------------
@@ -53,7 +56,28 @@ def init(config_fp):
     with open(config['damagetype_label_fp']) as txt:
         type_labels = txt.read().splitlines()
 
-def run_detection(image_fp):
+    prep_image = tf.zeros([1, 150, 150, 3])
+    damage_model.predict(prep_image)
+    location_model.predict(prep_image)
+    type_model.predict(prep_image)
+
+'''
+Main classification pipeline.
+Takes an image and calls preprocessing, feeds the image into damage model.
+Depending on damage model output feed image into location model and damagetype model respectively.
+Fill dictionary with results.
+    ---------------
+    Inputs
+    ---------------
+    image_fp - string
+        file path to the image
+    ---------------
+    Outputs
+    ---------------
+    result_dict - dict
+        dictionary containing car damage classifications in form {labeltype : class/es}
+'''
+def run_classification(image_fp):
     global damage_model
     global damage_labels
     global damage_thresh
@@ -86,8 +110,9 @@ if __name__ == "__main__":
     while True:
         try:
             img_fp = str(input("Image filepath: "))
-            results = run_detection(img_fp)
+            results = run_classification(img_fp)
             print(results)
         except KeyboardInterrupt:
+            print('\n')
             print('Shutting down application')
             break

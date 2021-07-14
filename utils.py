@@ -25,7 +25,7 @@ Creates required label and image lists for further dataset preparation.
         list containing damage type labels
 '''
 def load_dataset(dataset_fp, csv_fp):
-    imagepaths, damage_labels, location_labels, type_labels = list(), list(), list(), list()
+    imagepaths = list()
     csv_data = pd.read_csv(csv_fp, dtype={'name': str, 'damage': str}, keep_default_na=True).fillna('[NULL]')
     csv_data['damagetype'] = csv_data['damagetype'].apply(lambda x: x.replace(";", ", "))
     csv_data['location'] = csv_data['location'].apply(lambda x: x.replace(";", ", "))
@@ -56,6 +56,7 @@ def augmentation(image_file, label):
     Encoding labels to integer values [0, ...., num_classes].
     Does train, val splitting. Shuffling is important.
     Calls data augmentation and batching functions.
+    ---------------
     Inputs
     ---------------
     images - list:
