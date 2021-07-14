@@ -1,0 +1,5 @@
+dent
+glass
+NULL
+paint
+wheel

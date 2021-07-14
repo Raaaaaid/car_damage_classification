@@ -47,11 +47,11 @@ images, damage, location, damagetype = load_dataset(TRAIN_DATASET_FP, CSV_DATA_F
 image_count = len(images)
 print("Image count: {}".format(image_count))
 
-damage_model = train_resnet(images, damage, 4, False)
-damage_model.save("/saved_models/ResNet50/resnet50_damage")
+#damage_model = train_resnet(images, damage, 4, False)
+#damage_model.save("/saved_models/ResNet50/resnet50_damage")
 
-# location_model = train_resnet(images, location, 4, True)
-# location_model.save("/saved_models/ResNet50/resnet50_location")
+location_model = train_resnet(images, location, 4, True)
+location_model.save("/saved_models/ResNet50/resnet50_location")
 
-# damagetype_model = train_resnet(images, damagetype, 5, True)
-# damagetype_model.save("/saved_models/ResNet50/resnet50_damagetype")
+damagetype_model = train_resnet(images, damagetype, 5, True)
+damagetype_model.save("/saved_models/ResNet50/resnet50_damagetype")

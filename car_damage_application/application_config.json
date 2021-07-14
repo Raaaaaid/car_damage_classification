@@ -1,0 +1,11 @@
+{
+    "damage_model_fp": "C:/saved_models/ResNet50/resnet50_damage",
+    "damage_conf_threshold": 0.75,
+    "damage_label_fp": "./damage_labels.txt",
+    "location_model_fp": "C:/saved_models/ResNet50/resnet50_location",
+    "location_conf_threshold": 0.75,
+    "location_label_fp": "./location_labels.txt",
+    "damagetype_model_fp": "C:/saved_models/ResNet50/resnet50_damagetype",
+    "damagetype_conf_threshold": 0.75,
+    "damagetype_label_fp": "./damagetype_labels.txt"
+}

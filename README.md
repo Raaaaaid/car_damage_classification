@@ -13,7 +13,7 @@ A small application based on TensorFlow and Keras for classifying car damage pro
 ### Dependencies
 - CUDA compatible graphics card
 - CUDA and cuDNN installed
-- Access to TF-Hub to fetch models OR models locally at ./keras/models/~
+- Access to TF-Hub to fetch pretrained models OR pretrained models locally at ./keras/models/~
 
 ### Getting started
   ```sh
