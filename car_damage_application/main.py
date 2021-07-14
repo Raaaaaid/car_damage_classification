@@ -1,7 +1,7 @@
+import argparse
 import json
-import tensorflow as tf
 from tensorflow import keras
-from inference import inference
+from inference import single_inference, preprocess_image
 
 damage_model = None
 damage_labels = None
@@ -15,6 +15,15 @@ type_model = None
 type_labels = None
 type_thresh = None
 
+'''
+Initialization of models, label lists and threshold values.
+Parameters get read from a Json file (see application_config.json).
+    ---------------
+    Inputs
+    ---------------
+    config_fp - string:
+        file path to configuration json
+'''
 def init(config_fp):
     global damage_model
     global damage_labels
@@ -44,7 +53,7 @@ def init(config_fp):
     with open(config['damagetype_label_fp']) as txt:
         type_labels = txt.read().splitlines()
 
-def run(image_fp):
+def run_detection(image_fp):
     global damage_model
     global damage_labels
     global damage_thresh
@@ -55,19 +64,30 @@ def run(image_fp):
     global type_labels
     global type_thresh
 
-    image = tf.io.read_file(image_fp)
-    image = tf.io.decode_jpeg(image, channels=3)
-    image = tf.image.resize(image, (150, 150))
-    image = tf.cast(image, tf.float32) / 255.0
-    image = tf.expand_dims(image, 0)
+    image = preprocess_image(image_fp)
 
-    damage = inference(image, damage_model, damage_thresh, damage_labels)
-    location = inference(image, location_model, location_thresh, location_labels)
-    damagetype = inference(image, type_model, type_thresh, type_labels)
-    return (damage, location, damagetype)
+    result_dict = dict()
+    damage = single_inference(image, damage_model, damage_thresh, damage_labels)
+    result_dict['damage'] = damage
+
+    if damage[0] != "whole":
+        location = single_inference(image, location_model, location_thresh, location_labels)
+        result_dict['location'] = location
+        damagetype = single_inference(image, type_model, type_thresh, type_labels)
+        result_dict['damagetype'] = damagetype
+    return result_dict
 
 if __name__ == "__main__":
-    init("./application_config.json")
-    img_fp = str(input("Image filepath: "))
-    results = run(img_fp)
-    print(results)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', type=str, default='./application_config.json', help='Path to config.json file')
+    args = parser.parse_args()
+
+    init(args.config)
+    while True:
+        try:
+            img_fp = str(input("Image filepath: "))
+            results = run_detection(img_fp)
+            print(results)
+        except KeyboardInterrupt:
+            print('Shutting down application')
+            break
