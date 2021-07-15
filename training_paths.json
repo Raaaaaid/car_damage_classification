@@ -1,0 +1,5 @@
+{
+	"train_dataset_path": "D:/Coding/car-damage-dataset-new/data/",
+	"csv_data_path": "D:/Coding/car-damage-dataset-new/new_data.csv",
+	"saving_model_path": "D:/"
+}

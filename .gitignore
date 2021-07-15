@@ -3,3 +3,7 @@
 
 # Ada Library Information
 *.ali
+
+# PyCharm Project Folders
+.idea/
+__pycache__/

@@ -4,8 +4,12 @@ import numpy as np
 
 from sklearn import preprocessing
 
+
+SEED = 42
+
+
 '''
-Creates required label and image lists for further dataset preparation.
+    Creates required label and image lists for further dataset preparation.
     Inputs
     ---------------
     dataset_fp - str: 
@@ -33,22 +37,87 @@ def load_dataset(dataset_fp, csv_fp):
         imagepaths.append(dataset_fp + str(row['name']))
     return imagepaths, csv_data['damage'].tolist(), csv_data['location'].tolist(), csv_data['damagetype'].tolist()
 
+'''
+    Encodes string labels to labels with a binary representation.
+    Inputs
+    ---------------
+    le - sklearn.preprocessing.OneHotEncoder or sklearn.preprocessing.MultiLabelBinarizer:
+        encoder to encode labels (strings) to a binary representation
+        (multi-class: OneHotEncoder, multi-label: MultiLabelBinarizer)
+    labels - list:
+        list of labels as strings
+    ---------------
+    Outputs
+    ---------------
+    numpy.ndarray:
+        list of labels as binary representations
+'''
 def encode_classes(le, labels):
     le.fit(labels)
     return le.transform(labels)
 
+'''
+    Reads an image file and decodes it to pixel values.
+    Inputs
+    ---------------
+    image_file - tf.Tensor:
+        tensor with the folderpath of the image as a string
+    label - tf.Tensor:
+        tensor with corresponding label
+    ---------------
+    Outputs:
+    ---------------
+    image - tf.Tensor:
+        tensor with pixel values of the image
+    label - tf.Tensor:
+        tensor with corresponding label
+'''
 def read_images(image_file, label):
     image = tf.io.read_file(image_file)
     image = tf.io.decode_jpeg(image, channels=3)
     return image, label
 
-def unification(image_file, label):
-    image = tf.image.resize(image_file, (150, 150))
+'''
+    Resizes a given image to 150x150 and normalizes its values to [0, 1].
+    Inputs
+    ---------------
+    image - tf.Tensor:
+        tensor with pixel values of the image
+    label - tf.Tensor:
+        tensor with corresponding label
+    ---------------
+    Outputs
+    ---------------
+    tf.Tensor:
+        tensor with resized and normalized pixel values of the image
+    tf.Tensor:
+        tensor with corresponding label
+'''
+def unification(image, label):
+    image = tf.image.resize(image, (150, 150))
     return tf.cast(image, tf.float32) / 255.0, label
 
-def augmentation(image_file, label):
-    # Data augmentation here
-    return image_file, label
+'''
+    Transforms a given image. The operations are random flip up/down, flip left/right,
+    randomly changed brightness and contrast.
+    Inputs
+    ---------------
+    image - tf.Tensor:
+        tensor with pixel values of the image
+    label - tf.Tensor:
+        tensor with corresponding label
+    ---------------
+    Outputs
+    ---------------
+    tf.data.Dataset:
+        dataset with the augmented image and the corresponding label
+'''
+def augmentation(image, label):
+    image = tf.image.random_flip_left_right(image, seed=SEED)
+    image = tf.image.random_flip_up_down(image, seed=SEED)
+    image = tf.image.random_brightness(image, 0.2, seed=SEED)
+    image = tf.image.random_contrast(image, 0.2, 0.5, seed=SEED)
+    return tf.data.Dataset.from_tensors((image, label))
 
 '''
     Generate tf.dataset based on images and labels. 
@@ -69,9 +138,9 @@ def augmentation(image_file, label):
     ---------------
     Outputs
     ---------------
-    train - tf.dataset:
+    augmented_train - tf.data.Dataset:
         image dataset the model will be trained on
-    val - tf.dataset:
+    val - tf.data.Dataset:
         image dataset for model validation
 '''
 def generate_dataset(images, labels, valsplit, multilabel_flag):
@@ -84,7 +153,11 @@ def generate_dataset(images, labels, valsplit, multilabel_flag):
         labels = np.array(labels).reshape(-1, 1)
     labels = encode_classes(labels_le, labels)
     dataset = tf.data.Dataset.from_tensor_slices((images, labels))
-    dataset = dataset.map(read_images).shuffle(len(images))
+    dataset = dataset.map(read_images).shuffle(len(images), seed=SEED)
     val = dataset.take(round(len(images) * valsplit)).map(unification).batch(8)
-    train = dataset.skip(round(len(images) * valsplit)).map(augmentation).map(unification).batch(8)
-    return train, val
+    train = dataset.skip(round(len(images) * valsplit))
+    augmented_train = train
+    for image, label in train:
+        augmented_train = augmented_train.concatenate(augmentation(image, label))
+    augmented_train = augmented_train.shuffle(len(images), seed=SEED).map(unification).batch(8)
+    return augmented_train, val
