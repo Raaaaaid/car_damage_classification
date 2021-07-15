@@ -75,7 +75,7 @@ Fill dictionary with results.
     Outputs
     ---------------
     result_dict - dict
-        dictionary containing car damage classifications in form {labeltype : class/es}
+        dictionary containing car damage classifications in form {labeltype : [(class, confidence)]}
 '''
 def run_classification(image_fp):
     global damage_model
@@ -88,17 +88,21 @@ def run_classification(image_fp):
     global type_labels
     global type_thresh
 
-    image = preprocess_image(image_fp)
-
     result_dict = dict()
-    damage = single_inference(image, damage_model, damage_thresh, damage_labels)
-    result_dict['damage'] = damage
+    try:
+        image = preprocess_image(image_fp)
 
-    if damage[0] != "whole":
-        location = single_inference(image, location_model, location_thresh, location_labels)
-        result_dict['location'] = location
-        damagetype = single_inference(image, type_model, type_thresh, type_labels)
-        result_dict['damagetype'] = damagetype
+        damage = single_inference(image, damage_model, damage_thresh, damage_labels)
+        result_dict['damage'] = damage
+
+        if damage[0][0] != "whole":
+            location = single_inference(image, location_model, location_thresh, location_labels)
+            result_dict['location'] = location
+            damagetype = single_inference(image, type_model, type_thresh, type_labels)
+            result_dict['damagetype'] = damagetype
+    except:
+        print('Something went wrong.')
+        pass
     return result_dict
 
 if __name__ == "__main__":

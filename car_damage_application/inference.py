@@ -50,7 +50,7 @@ def single_inference(image, model, threshold, labels):
     class_list = []
     for j in range(len(tensor)):
         if tensor[j] > threshold:
-            class_list.append(labels[j])
+            class_list.append((labels[j], tensor[j]))
     return class_list
 
 
