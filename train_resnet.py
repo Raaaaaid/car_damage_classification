@@ -99,7 +99,7 @@ def train_resnet(images, labels, num_classes, multilabel_flag, model_path):
         optimizer=tf.keras.optimizers.Adam(learning_rate=base_learning_rate),
         loss=loss_func,
         metrics=[metric])
-    model.fit(train, epochs=500, batch_size=8, validation_data=val, verbose=1, shuffle=False,
+    model.fit(train, epochs=500, batch_size=8, validation_data=val, verbose=1,
               callbacks=[decrease_learning_rate, tensorboard, early_stopping])
 
     # save model
