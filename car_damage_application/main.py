@@ -16,6 +16,8 @@ type_model = None
 type_labels = None
 type_thresh = None
 
+debug = "False"
+
 '''
 Initialization of models, label lists and threshold values.
 Parameters get read from a Json file (see application_config.json).
@@ -37,10 +39,13 @@ def init(config_fp):
     global type_model
     global type_labels
     global type_thresh
+    global debug
 
     with open(config_fp) as config_file:
         config = json.load(config_file)
     
+    debug = config['debug']
+
     damage_model = keras.models.load_model(config['damage_model_fp'])
     damage_thresh = config['damage_conf_threshold']
     with open(config['damage_label_fp']) as txt:
@@ -94,14 +99,13 @@ def run_classification(image_fp):
 
         damage = single_inference(image, damage_model, damage_thresh, damage_labels)
         result_dict['damage'] = damage
-
         if damage[0][0] != "whole":
             location = single_inference(image, location_model, location_thresh, location_labels)
             result_dict['location'] = location
             damagetype = single_inference(image, type_model, type_thresh, type_labels)
             result_dict['damagetype'] = damagetype
     except:
-        print('Something went wrong.')
+        print('No label classified.')
         pass
     return result_dict
 
@@ -114,7 +118,11 @@ if __name__ == "__main__":
     while True:
         try:
             img_fp = str(input("Image filepath: "))
-            results = run_classification(img_fp)
+            image = tf.io.read_file(img_fp)
+            image = tf.io.decode_jpeg(image, channels=3)
+            if debug == "True":
+                print(image)
+            results = run_classification(image)
             print(results)
         except KeyboardInterrupt:
             print('\n')

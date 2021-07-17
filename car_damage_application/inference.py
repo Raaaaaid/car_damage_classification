@@ -1,7 +1,6 @@
 import tensorflow as tf
 from tensorflow import keras
 
-damage_names = ["minor", "moderate", "severe", "whole"]
 
 '''
 Loads given image and restructures it to fit model properties.
@@ -17,9 +16,7 @@ Includes resizing to model size, normalizing pixel values and expansion of dimen
     image - tensor:
         tf.image tensor ready for model input
 '''
-def preprocess_image(image_fp):
-    image = tf.io.read_file(image_fp)
-    image = tf.io.decode_jpeg(image, channels=3)
+def preprocess_image(image):
     image = tf.image.resize(image, (150, 150))
     image = tf.cast(image, tf.float32) / 255.0
     image = tf.expand_dims(image, 0)
@@ -53,9 +50,11 @@ def single_inference(image, model, threshold, labels):
             class_list.append((labels[j], tensor[j]))
     return class_list
 
-
+"""
+For testing purposes this gets a main
+"""
 if __name__ == "__main__":
     model = keras.models.load_model('C:/saved_models/ResNet50/resnet50_damage')
     image = preprocess_image('C:/Users/Pascal/Pictures/car_testing/car_mild.jpg')
-    result = single_inference(image, model, 0.7, damage_names)
+    result = single_inference(image, model, 0.7, ["minor", "moderate", "severe", "whole"])
     print(result)

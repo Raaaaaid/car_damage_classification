@@ -9,5 +9,7 @@
 
     "damagetype_model_fp": "C:/saved_models/ResNet50/resnet50_damagetype",
     "damagetype_conf_threshold": 0.5,
-    "damagetype_label_fp": "./damagetype_labels.txt"
+    "damagetype_label_fp": "./damagetype_labels.txt",
+
+    "debug": "False"
 }
