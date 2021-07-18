@@ -2,7 +2,7 @@ import tensorflow as tf
 import pandas as pd
 import numpy as np
 
-from sklearn import preprocessing
+from sklearn import preprocessing, model_selection
 
 
 SEED = 42
@@ -41,10 +41,14 @@ def load_dataset(dataset_fp, csv_fp):
     Encodes string labels to labels with a binary representation.
     Inputs
     ---------------
-    le - sklearn.preprocessing.OneHotEncoder or sklearn.preprocessing.MultiLabelBinarizer:
+    encoder - sklearn.preprocessing.OneHotEncoder or sklearn.preprocessing.MultiLabelBinarizer:
         encoder to encode labels (strings) to a binary representation
         (multi-class: OneHotEncoder, multi-label: MultiLabelBinarizer)
-    labels - list:
+        Translation:
+            - damage labels: ["minor", "moderate", "severe", "whole"]
+            - location labels: ["NULL", "front", "rear", "side"]
+            - damagetype labels: ["NULL", "dent", "glass", "paint", "wheel"]
+    labels - numpy.ndarray:
         list of labels as strings
     ---------------
     Outputs
@@ -52,9 +56,9 @@ def load_dataset(dataset_fp, csv_fp):
     numpy.ndarray:
         list of labels as binary representations
 '''
-def encode_classes(le, labels):
-    le.fit(labels)
-    return le.transform(labels)
+def encode_classes(encoder, labels):
+    encoder.fit(labels)
+    return encoder.transform(labels)
 
 '''
     Reads an image file and decodes it to pixel values.
@@ -120,44 +124,67 @@ def augmentation(image, label):
     return tf.data.Dataset.from_tensors((image, label))
 
 '''
-    Generate tf.dataset based on images and labels. 
-    Lists have to be formatted depending on multi label or single label classification.
-    Encoding labels to integer values [0, ...., num_classes].
-    Does train, val splitting. Shuffling is important.
-    Calls data augmentation and batching functions.
+    Generates cv_k train and validation tf.datasets based on images and labels. Splits are
+    performed by a normal KFold (multi-label case) or a StratifiedKFold (multi-class case).
+    Lists have to be formatted depending on multi label or single label classification. Also
+    shuffles data, unificates images, encodes labels, calls data augmentation and batching
+    functions.
     Inputs
     ---------------
     images - list:
         list of full image filepaths
     labels - list:
         list of labels corresponding to the images
-    valsplit - float:
-        percentage of images used for validation dataset
+    cv_k - int:
+        number of folds for cross validation
     multilabel_flag - bool:
         True/False flag signalling multi label classification
     ---------------
-    Outputs
+    Yields
     ---------------
     augmented_train - tf.data.Dataset:
         image dataset the model will be trained on
     val - tf.data.Dataset:
         image dataset for model validation
 '''
-def generate_dataset(images, labels, valsplit, multilabel_flag):
+def generate_dataset(images, labels, cv_k, multilabel_flag):
+
+    # convert lists to np.arrays
+    images = np.array(images)
+    labels = np.array(labels)
+
+    # use normal KFold for multi-label case and StratifiedKFold for multi-class case
     if multilabel_flag:
-        labels_le = preprocessing.MultiLabelBinarizer()
-        for i in range(len(labels)):
-            labels[i] = labels[i].strip('][').split(', ')
+        cv = model_selection.KFold(n_splits=cv_k, shuffle=True, random_state=SEED)
     else:
-        labels_le = preprocessing.OneHotEncoder(sparse=False)
-        labels = np.array(labels).reshape(-1, 1)
-    labels = encode_classes(labels_le, labels)
-    dataset = tf.data.Dataset.from_tensor_slices((images, labels))
-    dataset = dataset.map(read_images).shuffle(len(images), seed=SEED)
-    val = dataset.take(round(len(images) * valsplit)).map(unification).batch(8)
-    train = dataset.skip(round(len(images) * valsplit))
-    augmented_train = train
-    for image, label in train:
-        augmented_train = augmented_train.concatenate(augmentation(image, label))
-    augmented_train = augmented_train.shuffle(len(images), seed=SEED).map(unification).batch(8)
-    return augmented_train, val
+        cv = model_selection.StratifiedKFold(n_splits=cv_k, shuffle=True, random_state=SEED)
+
+    for train_ind, val_ind in cv.split(images, labels):
+        train_images, train_labels = images[train_ind], labels[train_ind]
+        val_images, val_labels = images[val_ind], labels[val_ind]
+
+        # encode labels
+        if multilabel_flag:
+            encoder = preprocessing.MultiLabelBinarizer()
+            def label_parser(label):
+                return label.strip("][").split(", ")
+            train_labels = np.array([label_parser(label) for label in train_labels])
+            val_labels = np.array([label_parser(label) for label in val_labels])
+        else:
+            encoder = preprocessing.OneHotEncoder(sparse=False)
+            train_labels = np.array(train_labels).reshape(-1, 1)
+            val_labels = np.array(val_labels).reshape(-1, 1)
+        train_labels, val_labels = encode_classes(encoder, train_labels), encode_classes(encoder, val_labels)
+
+        # prepare validation images
+        val = tf.data.Dataset.from_tensor_slices((val_images, val_labels)).map(read_images)
+        val = val.shuffle(len(val_images), seed=SEED).map(unification).batch(8)
+
+        # prepare and augmentate training images
+        train = tf.data.Dataset.from_tensor_slices((train_images, train_labels)).map(read_images)
+        augmented_train = train
+        for image, label in train:
+            augmented_train = augmented_train.concatenate(augmentation(image, label))
+        augmented_train = augmented_train.shuffle(len(augmented_train), seed=SEED).map(unification).batch(8)
+
+        yield augmented_train, val

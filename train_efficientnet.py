@@ -1,5 +1,6 @@
 import tensorflow as tf
 import pandas as pd
+import numpy as np
 import json
 import datetime
 
@@ -10,7 +11,8 @@ from utils import load_dataset, generate_dataset
     Builds a neural network on top of EfficientNetB0. A different architecture is build depending
     on the labels (multi-class or multi-label case). The function implements early stopping,
     a slowly decreasing learning rate and a callback for tensorboard to visualize results.
-    Tensorboard logs and the model itself are saved at model_path.
+    This function performs cross validation. The number of splits is defined in the generate_dataset()
+    function. Tensorboard logs and the best model itself are saved at model_path.
     Inputs
     ---------------
     images - list:
@@ -30,80 +32,114 @@ from utils import load_dataset, generate_dataset
     ---------------
 '''
 def train_efficientnet(images, labeltype, num_classes, multilabel_flag, model_path):
-    
-    train, val = generate_dataset(images, labeltype, 0.15, multilabel_flag)
+
+    # holds models and accuracies for each iteration
+    models, accuracies = list(), list()
+
+    # counts iterations
+    cv_k = 0
 
     # setting folder to save logs and model
     if multilabel_flag:
         if num_classes == 4:
-            folder = "efficientnetb0_location/"
+            folder = "resnet50v2_location/"
         else:
-            folder = "efficientnetb0_damagetype/"
+            folder = "resnet50v2_damagetype/"
     else:
-        folder = "efficientnetb0_damage/"
+        folder = "resnet50v2_damage/"
+    
+    for train, val in generate_dataset(images, labeltype, 5, multilabel_flag):
 
-    # set correct activation function, metric and loss function for multi-label and multi-class case
-    if multilabel_flag:
-        activation_func = "sigmoid"
-        metric = tf.keras.metrics.BinaryAccuracy(threshold=0.5)
-        loss_func = tf.keras.losses.BinaryCrossentropy(from_logits=False)
-    else:
-        activation_func = "softmax"
-        metric = tf.keras.metrics.CategoricalAccuracy()
-        loss_func = tf.keras.losses.CategoricalCrossentropy(from_logits=False)
+        cv_k += 1
 
-    # EfficientNetB0 Model Customization
-    effnetb0 = tf.keras.applications.EfficientNetB0(
-        include_top=False,
-        weights="imagenet",
-        input_shape=(150, 150, 3),
-        pooling=None,
-        classes=num_classes,
-    )
-    effnetb0.trainable = False
-    prediction_layer = tf.keras.layers.Dense(num_classes, activation=activation_func)
-    model = tf.keras.Sequential([
-        effnetb0,
-        tf.keras.layers.Flatten(),
-        prediction_layer
-    ])
-    model.summary()
-
-    # initialize early stopping callback
-    if multilabel_flag:
-        monitoring = "val_binary_accuracy"
-    else:
-        monitoring = "val_categorical_accuracy"
-    early_stopping = tf.keras.callbacks.EarlyStopping(
-        monitor=monitoring,
-        patience=8,
-        min_delta=0.001,
-        mode="max"
-    )
-
-    # initialize a callback to decrease the learning rate over time
-    def scheduler(epoch, learning_rate):
-        if epoch < 6:
-            return learning_rate
+        # set correct activation function, metric and loss function for multi-label and multi-class case
+        if multilabel_flag:
+            activation_func = "sigmoid"
+            metric = tf.keras.metrics.BinaryAccuracy(threshold=0.5)
+            loss_func = tf.keras.losses.BinaryCrossentropy(from_logits=False)
         else:
-            return learning_rate * tf.math.exp(-0.1)
-    decrease_learning_rate = tf.keras.callbacks.LearningRateScheduler(scheduler, verbose=1)
+            activation_func = "softmax"
+            metric = tf.keras.metrics.CategoricalAccuracy()
+            loss_func = tf.keras.losses.CategoricalCrossentropy(from_logits=False)
 
-    # initialize tensorboard for visualizing results
-    log_dir = model_path + folder + "logs/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    tensorboard = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+        # EfficientNetB0 Model Customization
+        effnetb0 = tf.keras.applications.EfficientNetB3(
+            include_top=False,
+            weights="imagenet",
+            input_shape=(150, 150, 3),
+            pooling=None,
+            classes=num_classes,
+        )
+        effnetb0.trainable = False
+        prediction_layer = tf.keras.layers.Dense(num_classes, activation=activation_func)
+        model = tf.keras.Sequential([
+            effnetb0,
+            tf.keras.layers.Flatten(),
+            prediction_layer
+        ])
+        model.summary()
 
-    # Training start
-    base_learning_rate = 0.0001
-    model.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=base_learning_rate),
-        loss=loss_func,
-        metrics=[metric])
-    model.fit(train, epochs=500, batch_size=8, validation_data=val, verbose=1,
-              callbacks=[decrease_learning_rate, tensorboard, early_stopping])
+        # initialize early stopping callback
+        if multilabel_flag:
+            monitoring = "val_binary_accuracy"
+        else:
+            monitoring = "val_categorical_accuracy"
+        early_stopping = tf.keras.callbacks.EarlyStopping(
+            monitor=monitoring,
+            patience=8,
+            min_delta=0.001,
+            mode="max"
+        )
 
-    # save model
-    model.save(model_path + folder)
+        # initialize a callback to decrease the learning rate over time
+        def scheduler(epoch, learning_rate):
+            if epoch < 6:
+                return learning_rate
+            else:
+                return learning_rate * tf.math.exp(-0.1)
+        decrease_learning_rate = tf.keras.callbacks.LearningRateScheduler(scheduler, verbose=1)
+
+        # initialize tensorboard for visualizing results
+        log_dir = model_path + folder + "logs/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + f"_k={cv_k}"
+        tensorboard = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+
+        # Training start
+        base_learning_rate = 0.0001
+        model.compile(
+            optimizer=tf.keras.optimizers.Adam(learning_rate=base_learning_rate),
+            loss=loss_func,
+            metrics=[metric])
+        model.fit(train, epochs=500, batch_size=8, validation_data=val, verbose=1,
+                  callbacks=[decrease_learning_rate, tensorboard, early_stopping])
+
+        # append model and its accuracy
+        models.append(model)
+        accuracies.append(model.evaluate(val, verbose=1)[1])
+        print(f"Accuracy for k={cv_k}: {accuracies[-1]}")
+
+        # count correct predicted labels for validation set
+        results_per_label = [[0, 0] for _ in range(num_classes)]
+        for element in val.as_numpy_iterator():
+            image_batch, label_batch = element
+            predictions = model.predict(image_batch)
+            for i in range(len(label_batch)):
+                for j, label in enumerate(label_batch[i]):
+                    if label == 1:
+                        results_per_label[j][0] += 1
+                    if multilabel_flag and label == 1 and predictions[i][j] >= 0.5:
+                        results_per_label[j][1] += 1
+                    elif not multilabel_flag and label == 1 and np.argmax(predictions[i]) == j:
+                        results_per_label[j][1] += 1
+        print(f"Correct predicted labels per class ([total, correct]): {results_per_label}")
+
+    print(f"Accuracies for cross validation splits: {accuracies}")
+    print(f"on average: {sum(accuracies) / len(accuracies)}")
+
+    # save best model
+    best_it = accuracies.index(max(accuracies))
+    print(f"best iteration. {best_it + 1}")
+    best_model = models[best_it]
+    best_model.save(model_path + folder)
 
 
 if __name__ == "__main__":
