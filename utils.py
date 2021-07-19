@@ -82,7 +82,7 @@ def read_images(image_file, label):
     return image, label
 
 '''
-    Resizes a given image to 150x150 and normalizes its values to [0, 1].
+    Resizes a given image to 160x160 and normalizes its values to [0, 1].
     Inputs
     ---------------
     image - tf.Tensor:
@@ -98,7 +98,7 @@ def read_images(image_file, label):
         tensor with corresponding label
 '''
 def unification(image, label):
-    image = tf.image.resize(image, (150, 150))
+    image = tf.image.resize(image, (160, 160))
     return tf.cast(image, tf.float32) / 255.0, label
 
 '''

@@ -8,7 +8,7 @@ from tensorflow import keras
 from utils import load_dataset, generate_dataset
 
 '''
-    Builds a neural network on top of EfficientNetB0. A different architecture is build depending
+    Builds a neural network on top of MobileNet. A different architecture is build depending
     on the labels (multi-class or multi-label case). The function implements early stopping,
     a slowly decreasing learning rate and a callback for tensorboard to visualize results.
     This function performs cross validation. The number of splits is defined in the generate_dataset()
@@ -31,7 +31,7 @@ from utils import load_dataset, generate_dataset
     -
     ---------------
 '''
-def train_efficientnet(images, labeltype, num_classes, multilabel_flag, model_path):
+def train_mobilenet(images, labeltype, num_classes, multilabel_flag, model_path):
 
     # holds models and accuracies for each iteration
     models, accuracies = list(), list()
@@ -42,11 +42,11 @@ def train_efficientnet(images, labeltype, num_classes, multilabel_flag, model_pa
     # setting folder to save logs and model
     if multilabel_flag:
         if num_classes == 4:
-            folder = "resnet50v2_location/"
+            folder = "mobilenet_location/"
         else:
-            folder = "resnet50v2_damagetype/"
+            folder = "mobilenet_damagetype/"
     else:
-        folder = "resnet50v2_damage/"
+        folder = "mobilenet_damage/"
     
     for train, val in generate_dataset(images, labeltype, 5, multilabel_flag):
 
@@ -62,18 +62,18 @@ def train_efficientnet(images, labeltype, num_classes, multilabel_flag, model_pa
             metric = tf.keras.metrics.CategoricalAccuracy()
             loss_func = tf.keras.losses.CategoricalCrossentropy(from_logits=False)
 
-        # EfficientNetB0 Model Customization
-        effnetb0 = tf.keras.applications.EfficientNetB3(
+        # MobileNet Model Customization
+        mobilenet = tf.keras.applications.MobileNet(
             include_top=False,
             weights="imagenet",
-            input_shape=(150, 150, 3),
-            pooling=None,
+            input_shape=(160, 160, 3),
+            pooling="avg",
             classes=num_classes,
         )
-        effnetb0.trainable = False
+        mobilenet.trainable = False
         prediction_layer = tf.keras.layers.Dense(num_classes, activation=activation_func)
         model = tf.keras.Sequential([
-            effnetb0,
+            mobilenet,
             tf.keras.layers.Flatten(),
             prediction_layer
         ])
@@ -156,13 +156,13 @@ if __name__ == "__main__":
     print("Training dataset at {}".format(train_dataset_path))
     print("*.csv file with labels at {}".format(csv_data_path))
     print("Trained models will be saved at {}".format(model_path))
-    model_path += "saved_models/EfficientNetB0/"
+    model_path += "saved_models/MobileNet/"
 
     # load dataset
     images, damage, location, damagetype = load_dataset(train_dataset_path, csv_data_path)
     print("Image count: {}".format(len(images)))
 
     # train nets
-    train_efficientnet(images, damage, 4, False, model_path)
-    #train_efficientnet(images, location, 4, True, model_path)
-    #train_efficientnet(images, damagetype, 5, True, model_path)
+    train_mobilenet(images, damage, 4, False, model_path)
+    #train_mobilenet(images, location, 4, True, model_path)
+    #train_mobilenet(images, damagetype, 5, True, model_path)

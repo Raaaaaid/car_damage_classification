@@ -66,8 +66,8 @@ def train_resnet(images, labels, num_classes, multilabel_flag, model_path):
         resnet50 = tf.keras.applications.ResNet50V2(
             include_top=False,
             weights="imagenet",
-            input_shape=(150, 150, 3),
-            pooling=None,
+            input_shape=(160, 160, 3),
+            pooling="avg",
             classes=num_classes,
         )
         resnet50.trainable = False
@@ -86,7 +86,7 @@ def train_resnet(images, labels, num_classes, multilabel_flag, model_path):
             monitoring = "val_categorical_accuracy"
         early_stopping = tf.keras.callbacks.EarlyStopping(
             monitor=monitoring,
-            patience=5,
+            patience=8,
             min_delta=0.001,
             mode="max"
         )
