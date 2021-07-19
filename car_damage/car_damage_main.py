@@ -2,7 +2,7 @@ import argparse
 import json
 import tensorflow as tf
 from tensorflow import keras
-from inference import single_inference, preprocess_image
+from .inference import single_inference, preprocess_image
 
 damage_model = None
 damage_labels = None
@@ -82,7 +82,7 @@ Fill dictionary with results.
     result_dict - dict
         dictionary containing car damage classifications in form {labeltype : [(class, confidence)]}
 '''
-def run_classification(image_fp):
+def run_classification(image):
     global damage_model
     global damage_labels
     global damage_thresh
@@ -95,7 +95,7 @@ def run_classification(image_fp):
 
     result_dict = dict()
     try:
-        image = preprocess_image(image_fp)
+        image = preprocess_image(image)
 
         damage = single_inference(image, damage_model, damage_thresh, damage_labels)
         result_dict['damage'] = damage
