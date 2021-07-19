@@ -60,7 +60,7 @@ def init(config_fp):
     with open(config['damagetype_label_fp']) as txt:
         type_labels = txt.read().splitlines()
 
-    prep_image = tf.zeros([1, 150, 150, 3])
+    prep_image = tf.zeros([1, 160, 160, 3])
     damage_model.predict(prep_image)
     location_model.predict(prep_image)
     type_model.predict(prep_image)

@@ -15,7 +15,7 @@ Includes resizing to model size, normalizing pixel values and expansion of dimen
         tf.image tensor ready for model input
 '''
 def preprocess_image(image):
-    image = tf.image.resize(image, (150, 150))
+    image = tf.image.resize(image, (160, 160))
     image = tf.cast(image, tf.float32) / 255.0
     image = tf.expand_dims(image, 0)
     return image
