@@ -1,6 +1,4 @@
 import tensorflow as tf
-from tensorflow import keras
-
 
 '''
 Loads given image and restructures it to fit model properties.
@@ -49,12 +47,3 @@ def single_inference(image, model, threshold, labels):
         if tensor[j] > threshold:
             class_list.append((labels[j], tensor[j]))
     return class_list
-
-"""
-For testing purposes this gets a main
-"""
-if __name__ == "__main__":
-    model = keras.models.load_model('C:/saved_models/ResNet50/resnet50_damage')
-    image = preprocess_image('C:/Users/Pascal/Pictures/car_testing/car_mild.jpg')
-    result = single_inference(image, model, 0.7, ["minor", "moderate", "severe", "whole"])
-    print(result)

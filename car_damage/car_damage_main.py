@@ -1,4 +1,3 @@
-import argparse
 import json
 import tensorflow as tf
 from tensorflow import keras
@@ -104,27 +103,8 @@ def run_classification(image):
             result_dict['location'] = location
             damagetype = single_inference(image, type_model, type_thresh, type_labels)
             result_dict['damagetype'] = damagetype
-    except:
-        print('No label classified.')
+    except Exception as e:
+        print(type(e))
+        print(e)
         pass
     return result_dict
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str, default='./application_config.json', help='Path to config.json file')
-    args = parser.parse_args()
-
-    init(args.config)
-    while True:
-        try:
-            img_fp = str(input("Image filepath: "))
-            image = tf.io.read_file(img_fp)
-            image = tf.io.decode_jpeg(image, channels=3)
-            if debug == "True":
-                print(image)
-            results = run_classification(image)
-            print(results)
-        except KeyboardInterrupt:
-            print('\n')
-            print('Shutting down application')
-            break

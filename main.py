@@ -4,6 +4,9 @@ import tensorflow as tf
 
 '''
 Command Line Interface application for the car_damage package.
+Requires a config json file for the car_damage package over the --config flag.
+Will ask you to provide an image filepath from where it tries to load the image an feed into the car_damage algorithms.
+Exit by keyboard interrupt.
 '''
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
