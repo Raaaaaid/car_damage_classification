@@ -137,7 +137,7 @@ def train_resnet(images, labels, num_classes, multilabel_flag, model_path):
 
     # save best model
     best_it = accuracies.index(max(accuracies))
-    print(f"best iteration. {best_it + 1}")
+    print(f"best iteration: {best_it + 1}")
     best_model = models[best_it]
     best_model.save(model_path + folder)
 

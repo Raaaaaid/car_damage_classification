@@ -18,6 +18,7 @@ A small application based on TensorFlow and Keras for classifying car damage pro
   ```sh
   pip install -r requirements.txt
   ```
+- **Attention:** Running the jupyter notebook might screw up the required environment since a special TensorFlow package is needed to run notebooks.  
 ## Run Car Damage Application
 - Adjust application_config.json to point to correct model files
 - Update label files accordingly
@@ -35,7 +36,7 @@ BinaryAccuracy and loss with BinaryCrossentropy.
 
 ## ResNet50V2
 
-Model available [over dropbox](https://www.dropbox.com/s/l84erw0vlisdzmn/ResNet50V2.rar?dl=0)
+Models available [over dropbox](https://www.dropbox.com/s/l84erw0vlisdzmn/ResNet50V2.rar?dl=0)
 
 ### Damage Severity
 
@@ -72,7 +73,7 @@ best iteration: 4
 
 ## MobileNet
 
-Model available [over dropbox](https://www.dropbox.com/s/685bhfvphemf0el/MobileNet.rar?dl=0)
+Models available [over dropbox](https://www.dropbox.com/s/685bhfvphemf0el/MobileNet.rar?dl=0)
 
 ### Damage Severity
 
