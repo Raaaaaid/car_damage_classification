@@ -110,7 +110,10 @@ best iteration: 4
 # Generalisation of the Models
 
 To get a first impression of how the models work on different data we used a car damage dataset found on kaggle to produce test results.  
-The dataset can be found [here.](https://www.kaggle.com/lplenka/coco-car-damage-detection-dataset) CSV ground truth used during testing can be provided on request.
+The dataset can be found at <https://www.kaggle.com/lplenka/coco-car-damage-detection-dataset> CSV ground truth used during testing can be provided on request.
+
+As with training results we display BinaryAccuracy for multi-label problems.
+For damage severity (here "Damage") which is a single-label problem CategorialAccuracy is shown.
 
 ## Resnet50V2
 
