@@ -8,7 +8,7 @@ from tensorflow import keras
 from utils import load_dataset, generate_dataset
 
 '''
-    Builds a neural network on top of MobileNet. A different architecture is build depending
+    Builds a neural network on top of ResNet50V2. A different architecture is build depending
     on the labels (multi-class or multi-label case). The function implements early stopping,
     a slowly decreasing learning rate and a callback for tensorboard to visualize results.
     This function performs cross validation. The number of splits is defined in the generate_dataset()
@@ -31,7 +31,7 @@ from utils import load_dataset, generate_dataset
     -
     ---------------
 '''
-def train_mobilenet(images, labeltype, num_classes, multilabel_flag, model_path):
+def train_resnet(images, labels, num_classes, multilabel_flag, model_path):
 
     # holds models and accuracies for each iteration
     models, accuracies = list(), list()
@@ -42,13 +42,13 @@ def train_mobilenet(images, labeltype, num_classes, multilabel_flag, model_path)
     # setting folder to save logs and model
     if multilabel_flag:
         if num_classes == 4:
-            folder = "mobilenet_location/"
+            folder = "resnet50v2_location/"
         else:
-            folder = "mobilenet_damagetype/"
+            folder = "resnet50v2_damagetype/"
     else:
-        folder = "mobilenet_damage/"
+        folder = "resnet50v2_damage/"
     
-    for train, val in generate_dataset(images, labeltype, 5, multilabel_flag):
+    for train, val in generate_dataset(images, labels, 5, multilabel_flag):
 
         cv_k += 1
 
@@ -62,18 +62,18 @@ def train_mobilenet(images, labeltype, num_classes, multilabel_flag, model_path)
             metric = tf.keras.metrics.CategoricalAccuracy()
             loss_func = tf.keras.losses.CategoricalCrossentropy(from_logits=False)
 
-        # MobileNet Model Customization
-        mobilenet = tf.keras.applications.MobileNet(
+        # Resnet50 Model Customization
+        resnet50 = tf.keras.applications.ResNet50V2(
             include_top=False,
             weights="imagenet",
             input_shape=(160, 160, 3),
             pooling="avg",
             classes=num_classes,
         )
-        mobilenet.trainable = False
+        resnet50.trainable = False
         prediction_layer = tf.keras.layers.Dense(num_classes, activation=activation_func)
         model = tf.keras.Sequential([
-            mobilenet,
+            resnet50,
             tf.keras.layers.Flatten(),
             prediction_layer
         ])
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     print("Eager execution: {}".format(tf.executing_eagerly()))
 
     # read paths from training_paths.json
-    with open("training_paths.json") as file:
+    with open("../training_paths.json") as file:
         json_data = json.load(file)
     train_dataset_path = json_data["train_dataset_path"]
     csv_data_path = json_data["csv_data_path"]
@@ -156,13 +156,13 @@ if __name__ == "__main__":
     print("Training dataset at {}".format(train_dataset_path))
     print("*.csv file with labels at {}".format(csv_data_path))
     print("Trained models will be saved at {}".format(model_path))
-    model_path += "saved_models/MobileNet/"
+    model_path += "saved_models/ResNet50V2/"
 
     # load dataset
     images, damage, location, damagetype = load_dataset(train_dataset_path, csv_data_path)
     print("Image count: {}".format(len(images)))
 
     # train nets
-    train_mobilenet(images, damage, 4, False, model_path)
-    #train_mobilenet(images, location, 4, True, model_path)
-    #train_mobilenet(images, damagetype, 5, True, model_path)
+    train_resnet(images, damage, 4, False, model_path)
+    #train_resnet(images, location, 4, True, model_path)
+    #train_resnet(images, damagetype, 5, True, model_path)
