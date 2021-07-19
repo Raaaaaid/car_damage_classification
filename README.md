@@ -106,3 +106,27 @@ best iteration: 4
 
 ![](images/mobilenet_damagetype_accuracy.PNG)
 ![](images/mobilenet_damagetype_loss.PNG)
+
+# Generalisation of the Models
+
+To get a first impression of how the models work on different data we used a car damage dataset found on kaggle to produce test results.  
+The dataset can be found at <https://www.kaggle.com/lplenka/coco-car-damage-detection-dataset> CSV ground truth used during testing can be provided on request.
+
+As with training results we display BinaryAccuracy for multi-label problems.
+For damage severity (here "Damage") which is a single-label problem CategorialAccuracy is shown.
+
+## Resnet50V2
+
+| Model       | Accuracy | Loss   |
+| ----------- | -------- | ------ |
+| Damage      | 0.4051   | 1.3502 |
+| Location    | 0.7722   | 0.4677 |
+| Damage Type | 0.7797   | 0.4284 | 
+
+## MobileNet
+
+| Model       | Accuracy | Loss   |
+| ----------- | -------- | ------ |
+| Damage      | 0.3291   | 1.6589 |
+| Location    | 0.6709   | 0.6862 |
+| Damage Type | 0.6557   | 0.7319 | 
