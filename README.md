@@ -38,15 +38,6 @@ Accuracies for cross validation splits: [0.7260273694992065, 0.7424657344818115,
 on average: 0.7254794478416443
 best iteration: 2
 
-| Label    | CrossVal k = 1  | CrossVal k = 2  | CrossVal k = 3  | CrossVal k = 4  | CrossVal k = 5  |
-| -------- | --------------- | --------------- | --------------- | --------------- | --------------- |
-|          | Total | Correct | Total | Correct | Total | Correct | Total | Correct | Total | Correct |
-| -------- | :---: | :-----: | :---: | :-----: | :---: | :-----: | :---: | :-----: | :---: | :-----: |
-| Minor    | 53    | 30      | 53    | 32      | 53    | 32      | 54    | 21      | 54    | 21      |
-| Moderate | 58    | 22      | 58    | 15      | 58    | 23      | 57    | 22      | 57    | 22      |
-| Severe   | 70    | 42      | 70    | 54      | 70    | 48      | 70    | 47      | 70    | 47      |
-| Whole    | 184   | 171     | 184   | 170     | 184   | 166     | 184   | 167     | 184   | 167     |
-
 ### Location
 
 Accuracies for cross validation splits: [0.8404109477996826, 0.8472602963447571, 0.8390411138534546, 0.8500000238418579, 0.8547945022583008]
