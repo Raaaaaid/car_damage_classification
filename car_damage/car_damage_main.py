@@ -98,11 +98,10 @@ def run_classification(image):
 
         damage = single_inference(image, damage_model, damage_thresh, damage_labels)
         result_dict['damage'] = damage
-        if damage[0][0] != "whole":
-            location = single_inference(image, location_model, location_thresh, location_labels)
-            result_dict['location'] = location
-            damagetype = single_inference(image, type_model, type_thresh, type_labels)
-            result_dict['damagetype'] = damagetype
+        location = single_inference(image, location_model, location_thresh, location_labels)
+        result_dict['location'] = location
+        damagetype = single_inference(image, type_model, type_thresh, type_labels)
+        result_dict['damagetype'] = damagetype
     except Exception as e:
         print(type(e))
         print(e)
