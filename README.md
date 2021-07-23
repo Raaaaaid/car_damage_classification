@@ -29,7 +29,7 @@ A small application based on TensorFlow and Keras for classifying car damage pro
 # Training Results
 
 Training was done using cross validation. We report accuracy results for each iteration here. A more detailed results for each label can be found with each model inside a results.txt file.\
-Each image shows two curves (blue: training set, orange: validation set). In
+Each image shows two curves (orange: training set, blue: validation set). In
 case of multi-class classification accuracy is measured with CategoricalAccuracy and loss with
 CategoricalCrossentropy. In case of multi-label classification accuracy is measured with
 BinaryAccuracy and loss with BinaryCrossentropy.
